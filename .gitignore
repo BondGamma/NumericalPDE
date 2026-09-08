@@ -1,0 +1,12 @@
+# Python virtual environment
+.venv/
+
+# Python bytecode
+__pycache__/
+
+# LaTeX build artefacts
+*.aux
+*.log
+*.toc
+*.bbl
+*.blg
