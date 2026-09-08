@@ -1,16 +1,21 @@
-# NumericalPDE — Team 11
+# NumericalODE — Team 11
 
 MTH321 Project 1: numerical methods for Ordinary Differential Equation (ODE)
 initial value problems.
 
 ## Repository layout
 
-| Path        | Purpose                                          |
-| ----------- | ------------------------------------------------ |
-| `code/`     | All source code (`integrators.py`, `run_all.py`, …) |
-| `figures/`  | Generated figures (final ones go in `report/`)   |
-| `report/`   | LaTeX report + slides                            |
-| `notes/`    | Meeting notes, issue tickets                     |
+```
+project-repo/
+├── README.md          # how to run the code + who does what
+├── .gitignore
+├── code/              # all source
+│   ├── integrators.py
+│   └── run_all.py
+├── figures/           # generated figures (final ones go in the report)
+├── report/            # LaTeX report + slides
+└── notes/             # meeting notes, issue tickets (optional)
+```
 
 Keep `code/` for source only — never commit output files (see `.gitignore`).
 
@@ -39,21 +44,18 @@ ignored by `.gitignore`.
 
 ## Who does what
 
-| Member        | GitHub      | Role                    |
-| ------------- | ----------- | ----------------------- |
-| [Name]        | [username]  | Project Manager         |
-| [Name]        | [username]  | Integrators / methods   |
-| [Name]        | [username]  | Plotting / figures      |
-| [Name]        | [username]  | Report / slides         |
+| Member | Username | Role |
+| --- | --- | --- |
+| [Member 1] | [username 1] | Project manager |
+| [Member 2] | [username 2] | Mathematical theory |
+| [Member 3] | [username 3] | Algorithm implementation |
+| [Member 4] | [username 4] | Visualization & report |
+| [Member 5] | [username 5] | Testing & validation |
 
-## Git workflow
+What each role owns:
 
-```bash
-git pull            # get the latest at the start of a session
-# … edit files …
-git add -A
-git commit -m "Describe what changed"
-git push
-```
-
-Commit at the end of every session with a message that says what changed.
+- **Project manager** — plan, meetings, presentations, weekly records
+- **Mathematical theory** — model, stability regions, Jacobian, error estimates
+- **Algorithm implementation** — Euler / RK4 / implicit / Newton / adaptivity + git
+- **Visualization & report** — figures, animations, LaTeX report, slides
+- **Testing & validation** — building your own oracle, cross-checks, edge cases
