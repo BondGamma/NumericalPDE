@@ -1,11 +1,12 @@
 # NumericalODE — Team 11
-
+```text
 ╔══════════════╗     y
 ║ Solving SDE  ║     │        ╱╲
 ║    💻 ⚙️     ║     │      ╱    ╲
 ╚══════════════╝     │   ╱╲╱      ╲
                      │ ╱            ╲
                      └───────────────► t
+```
 
 
 MTH321 Project 1: numerical methods for Ordinary Differential Equation (ODE)
