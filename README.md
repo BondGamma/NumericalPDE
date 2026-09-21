@@ -1,5 +1,13 @@
 # NumericalODE — Team 11
 
+╔══════════════╗     y
+║ Solving SDE  ║     │        ╱╲
+║    💻 ⚙️     ║     │      ╱    ╲
+╚══════════════╝     │   ╱╲╱      ╲
+                     │ ╱            ╲
+                     └───────────────► t
+
+
 MTH321 Project 1: numerical methods for Ordinary Differential Equation (ODE)
 initial value problems.
 
@@ -44,18 +52,18 @@ ignored by `.gitignore`.
 
 ## Who does what
 
-| Member | Username | Role |
-| --- | --- | --- |
-| [Member 1] | [username 1] | Project manager |
-| [Member 2] | [username 2] | Mathematical theory |
-| [Member 3] | [username 3] | Algorithm implementation |
-| [Member 4] | [username 4] | Visualization & report |
-| [Member 5] | [username 5] | Testing & validation |
+| Member        | Username      | Role                      |
+|---------------|---------------|---------------------------|
+| Zizhao Wang   | Pwzza         | Project manager           |
+| [Member 2]    | [username 2]  | Mathematical theory       |
+| Artem Bobrov  | BondGamma     | Algorithm implementation  |
+| [Member 4]    | [username 4]  | Visualization & report    |
+| [Member 5]    | [username 5]  | Testing & validation      |
 
 What each role owns:
 
 - **Project manager** — plan, meetings, presentations, weekly records
 - **Mathematical theory** — model, stability regions, Jacobian, error estimates
-- **Algorithm implementation** — Euler / RK4 / implicit / Newton / adaptivity + git
+- **Algorithm implementation** — G / RK4 / implicit / Newton / adaptivity + git
 - **Visualization & report** — figures, animations, LaTeX report, slides
 - **Testing & validation** — building your own oracle, cross-checks, edge cases
