@@ -14,9 +14,14 @@ Two simulators, one for each SDE model:
                           with Z1, Z2 iid N(0, 1), so that
                           corr(dW1, dW2) = rho and Var(dW2) = dt.
 
-Both return arrays of shape (n_paths, n_steps); a full Brownian path is the
-cumulative sum (prepend W(0) = 0).  See the problem pack for the increment
-convention.
+Both return arrays of shape (n_paths, n_steps).
+
+The engine also provides the "same Brownian motion" extracter/generaliser,
+extract_dw: given fine increments at the maximum resolution n_max (the last
+axis), it sums blocks of fine increments to produce the increments at any
+coarser step count n (which must divide n_max).  Every coarse increment is a
+sum of fine increments, so all step sizes see the SAME underlying Brownian
+path — what makes strong-convergence comparisons across dt meaningful.
 """
 
 import numpy as np
@@ -55,20 +60,32 @@ def correlated_bm_pair(n_steps, dt, rho, n_paths=1, seed=None):
     return dW1, dW2
 
 
-def bm_path(dW):
-    """Cumulative Brownian path W from increments dW (prepends W(0) = 0).
+def extract_dw(dw_log, n_steps):
+    """Coarsen fine Brownian increments to `n_steps` steps by summing blocks.
+
+    This is the "same Brownian motion" extracter/generaliser: given increments
+    at the finest resolution n_max (the last axis of `dw_log`), return the
+    increments at a coarser resolution n_steps, where each coarse increment is
+    the sum of `n_max / n_steps` consecutive fine increments.  Summing in this
+    way guarantees every step size shares the SAME underlying Brownian path
+    (the coarse path is exactly the fine path sampled at the coarse grid), so
+    convergence studies across dt compare the same realisation.
 
     Parameters
     ----------
-    dW : ndarray, shape (n_paths, n_steps)
+    dw_log : ndarray, shape (..., n_max)
+        Fine increments.  Standard BM: (n_sims, n_max).  Correlated pair:
+        (2, n_sims, n_max).  A single path (n_max,) is also accepted.
+    n_steps : int
+        Target number of (coarser) steps.  Must divide n_max.
 
     Returns
     -------
-    W : ndarray, shape (n_paths, n_steps + 1), with W[:, 0] = 0.
+    ndarray, shape (..., n_steps) — the coarsened increments.
     """
-    dW = np.asarray(dW, dtype=float)
-    if dW.ndim == 1:
-        dW = dW[None, :]
-    return np.concatenate(
-        [np.zeros((dW.shape[0], 1)), np.cumsum(dW, axis=1)], axis=1
-    )
+    arr = np.asarray(dw_log, dtype=float)
+    n_max = arr.shape[-1]
+    if n_steps <= 0 or n_max % n_steps != 0:
+        raise ValueError("n_steps=%d must divide n_max=%d" % (n_steps, n_max))
+    block = n_max // n_steps
+    return arr.reshape(arr.shape[:-1] + (n_steps, block)).sum(axis=-1)

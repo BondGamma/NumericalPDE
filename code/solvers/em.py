@@ -22,7 +22,7 @@ and the convergence / Monte-Carlo studies are assembled in code/experiments.
 import numpy as np
 
 from code.SDEs import gbm as _gbm
-from code.SDEs import NA_SV as _nasv
+from code.SDEs import nasv as _nasv
 
 _MODELS = ("gbm", "nasv")
 
