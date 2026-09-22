@@ -1,0 +1,110 @@
+4. ④ Financial SDE: GBM benchmark and non-affine volatility
+
+Phenomenon. In finance, asset prices are modelled with stochastic differential
+equations. The simplest is geometric Brownian motion (GBM):
+
+    dS = μ S dt + σ S dW
+
+with solution
+
+    S(t) = S0 exp( (μ − σ²/2) t + σ W(t) )
+
+— an exact formula exists, making this an ideal validation problem.
+
+Model. The standard finance discretisation is in the log price X_t = log S_t:
+Itô's lemma gives the constant-coefficient SDE
+
+    dX = (μ − σ²/2) dt + σ dW,
+
+so Euler–Maruyama on X,
+
+    X_{n+1} = X_n + (μ − σ²/2) Δt + σ ΔW_n,
+
+reproduces the exact Gaussian transition and S_n = e^{X_n} stays positive — this
+is the exact-simulation formula. But on X the noise is additive: the Milstein
+correction vanishes, so one cannot measure a strong order of 1 there. To
+demonstrate convergence order, discretise the price itself, where the noise is
+state-dependent:
+
+    S_{n+1} = S_n + μ S_n Δt + σ S_n ΔW_n                          (EM)
+    S_{n+1} = S_n + μ S_n Δt + σ S_n ΔW_n + ½ σ² S_n (ΔW_n² − Δt)  (Milstein)
+
+Numerical challenges. This is an SDE, so the ODE stability/order theory must be
+replaced by strong vs. weak convergence. Great for showing students that order
+concepts carry over but with fractional orders.
+
+Your report should address:
+
+• Strong convergence: E|S_N − S(T)| vs. Δt on log-log — slope ½ for EM, 1 for
+  Milstein.
+
+• Weak convergence of E[S(T)] — expected slope 1 for both methods. Use
+  independent batches or confidence intervals, and choose enough paths that
+  Monte Carlo error does not hide the time-stepping bias.
+
+• The distribution of S(T) vs. the exact lognormal law (histogram overlay,
+  quantile comparison).
+
+• Optional (☆☆☆): positivity — determine when an EM or Milstein update can
+  produce a negative value. Neither scheme is unconditionally
+  positivity-preserving. Measure how often negativity occurs as Δt varies and
+  explain the possible effect on option prices.
+
+Sanity check. E[S(T)] = S0 e^{μT} exactly; Var matches the lognormal formula.
+
+But why simulate a model that has a formula? It is a fair objection, and
+answering it is the real lesson. GBM is a rare gift: its transition has a closed
+form, so S(t) can be simulated exactly via
+
+    S_{n+1} = S_n exp( (μ − σ²/2) Δt + σ √Δt Z_n )
+
+— no discretisation error at all, so Euler–Maruyama is unnecessary there. For a
+model in which time discretisation is genuinely necessary, use the following
+non-affine stochastic-volatility model. Write X_t = log S_t and let
+
+    dX_t = (μ − ½ g(Y_t)²) dt + g(Y_t) dW_t^(1),
+    dY_t = κ (θ − Y_t) dt + ξ √(1 + Y_t²) dW_t^(2),
+    g(y) = σmin + (σmax − σmin) / (1 + e^{−y}),   d⟨W^(1), W^(2)⟩_t = ρ dt,
+
+where 0 < σmin < σmax, κ, ξ > 0, and |ρ| < 1. The bounded logistic function keeps
+instantaneous asset volatility positive, while the nonlinear volatility-factor
+diffusion makes the joint process non-affine. No closed-form transition
+distribution or practical exact sampler is known for this generic model, so
+numerical SDE integration is part of the model solution rather than merely a
+comparison with a known formula.
+
+Use the reproducible benchmark
+
+    S0 = 100,  Y0 = 0,  μ = 0.05,  κ = 2,  θ = −0.2,  ξ = 0.6,  ρ = −0.7,
+    σmin = 0.10,  σmax = 0.50,  T = 1.
+
+Generate correlated increments from independent Z_{1,n}, Z_{2,n} ∼ N(0, 1):
+
+    ΔW_n^(1) = √Δt Z_{1,n},
+    ΔW_n^(2) = √Δt ( ρ Z_{1,n} + √(1 − ρ²) Z_{2,n} ).
+
+Apply Euler–Maruyama to (X, Y) and recover S_n = e^{X_n}; this representation
+preserves S_n > 0 automatically. Do not quote the scalar Milstein order-one
+result for this two-noise system: a full multidimensional Milstein method may
+require cross terms and simulated iterated stochastic integrals.
+
+Recommended extension for a finance student:
+
+• Couple every coarse path to a much finer EM reference path by summing the fine
+  Brownian increments. Plot E|S_T^(h) − S_T^(href)| with confidence intervals;
+  describe the observed strong rate as empirical, because the reference is
+  numerical rather than exact.
+
+• For weak convergence, estimate a payoff such as E[(S_T − 100)⁺]. Use the same
+  fine reference, common random numbers, and confidence intervals. Do not claim a
+  slope once estimated bias is comparable to its sampling uncertainty.
+
+• Check Brownian-increment sample variances and correlation, convergence under
+  refinement, finiteness of all paths, and positivity of S = e^X. Repeat with at
+  least two finer reference steps to show that the benchmark itself is
+  sufficiently resolved.
+
+• Compare this experiment with GBM: GBM supplies an exact pathwise benchmark,
+  whereas the non-affine model requires a carefully verified numerical reference.
+  State clearly that agreement between two discretised solutions is evidence, not
+  an exact-error calculation.
