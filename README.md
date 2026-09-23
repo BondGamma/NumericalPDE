@@ -53,13 +53,13 @@ ignored by `.gitignore`.
 
 ## Who does what
 
-| Member        | Username      | Role                      |
-|---------------|---------------|---------------------------|
-| Zizhao Wang   | Pwzza         | Project manager           |
-| [Member 2]    | [username 2]  | Mathematical theory       |
-| Artem Bobrov  | BondGamma     | Algorithm implementation  |
-| [Member 4]    | [username 4]  | Visualization & report    |
-| [Member 5]    | [username 5]  | Testing & validation      |
+| Member        | Username          | Role                      |
+|---------------|-------------------|---------------------------|
+| Zizhao Wang   | Pwzza             | Project manager           |
+| Hao He        | HH888-prog        | Mathematical theory       |
+| Artem Bobrov  | BondGamma         | Algorithm implementation  |
+| Zhenhui Yuan  | god-of-profound   | Visualization & report    |
+| Mingzhen Lin  | AmazingFatCat     | Testing & validation      |
 
 What each role owns:
 
