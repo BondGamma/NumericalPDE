@@ -1,0 +1,83 @@
+\section{Implementation}
+% ============================================================
+
+\subsection{Algorithm}
+% ------------------------------------------------------------
+
+We discretise the GBM price $S$ itself, where the noise $\sigma S$ is
+state-dependent, so the two schemes below have distinct strong orders
+($1/2$ vs.\ $1$).  Both consume the same Brownian increments $\Delta W_n$, which
+are produced once by the Brownian-motion engine (see
+Section~\ref{sec:key-decisions}).
+
+\begin{algorithm}[H]
+\caption{Euler--Maruyama (EM) for GBM, $dS = \mu S\,dt + \sigma S\,dW$}
+\label{alg:em}
+\begin{algorithmic}[1]
+\Require initial price $S_0$, step size $h$, steps $N$,
+         increments $\{\Delta W_n\}_{n=0}^{N-1}$, drift $\mu$, volatility $\sigma$
+\Ensure approximate price $S_N$
+\State $S_0 \leftarrow S_0$
+\For{$n = 0, 1, \ldots, N-1$}
+    \State $S_{n+1} \leftarrow S_n + \mu\, S_n\, h + \sigma\, S_n\, \Delta W_n$
+\EndFor
+\State \Return $S_N$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Milstein for GBM, $dS = \mu S\,dt + \sigma S\,dW$}
+\label{alg:milstein}
+\begin{algorithmic}[1]
+\Require initial price $S_0$, step size $h$, steps $N$,
+         increments $\{\Delta W_n\}_{n=0}^{N-1}$, drift $\mu$, volatility $\sigma$
+\Ensure approximate price $S_N$
+\State $S_0 \leftarrow S_0$
+\For{$n = 0, 1, \ldots, N-1$}
+    \State $S_{n+1} \leftarrow S_n + \mu\, S_n\, h + \sigma\, S_n\, \Delta W_n
+                    + \tfrac12\, \sigma^2 S_n \left(\Delta W_n^2 - h\right)$
+\EndFor
+\State \Return $S_N$
+\end{algorithmic}
+\end{algorithm}
+
+The same EM rule is applied to the two-dimensional non-affine SV state
+$(X,Y)$; the Milstein correction is not used there (Section~\ref{sec:key-decisions}).
+
+\subsection{Code Structure}
+% ------------------------------------------------------------
+
+\begin{verbatim}
+code/
+|-- run_all.py              # entry point: runs every experiment
+|-- SDEs/
+|   |-- bm_engine.py        # standard_bm, correlated_bm_pair, extract_dw
+|   |-- gbm.py              # GBM: EM RHS, Milstein correction, log-price RHS, exact sol.
+|   `-- nasv.py             # NA-SV: logistic volatility g(y), EM RHS
+|-- solvers/
+|   |-- em.py               # Euler--Maruyama
+|   `-- milstein.py         # Milstein (scalar GBM only)
+|-- tools/
+|   `-- mc.py               # Monte-Carlo BM simulator + increment-log I/O
+`-- experiments/
+    `-- exp0_simulate_bm.py # shared-path smoke test
+\end{verbatim}
+
+\subsection{Key Design Decisions}
+\label{sec:key-decisions}
+% ------------------------------------------------------------
+
+\begin{itemize}
+\item \textbf{Shared Brownian path (the engine).} Strong error is a
+      \emph{pathwise} distance, so drawing fresh noise per step size would bury
+      the $\mathcal{O}(h^p)$ trend in Monte-Carlo noise.  The engine draws fine
+      increments once at $n_{\max}$ and coarsens any $n \mid n_{\max}$ by summing
+      blocks of fine increments, so every step size sees the \emph{same}
+      underlying path (common random numbers).
+\item \textbf{Log-price transform.} Discretising $X = \log S$ makes the GBM noise
+      additive (EM on $X$ is the exact sampler) and keeps $S = e^{X} > 0$
+      automatically.
+\item \textbf{Milstein only for scalar GBM.} The order-1 correction applies on the
+      price $S$, where the noise is state-dependent; it vanishes on $X$ and does
+      not extend to the two-noise NA-SV system.
+\end{itemize}
