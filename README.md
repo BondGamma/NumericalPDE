@@ -93,6 +93,11 @@ python code/experiments/exp0_simulate_bm.py
 Output: 4 PNGs in `figures/` — 2 simulations × 2 engines
 (`bm_standard_sim{1,2}.png`, `bm_pairing_sim{1,2}.png`).
 
+It also exercises the advanced path plotters (`code/visualizations/paths.py`)
+on every 1-D model — pure Brownian motion, exact GBM, EM/Milstein GBM, and
+NA-SV — emitting a confidence-band figure (`band_<model>.png`) and a
+cross-section figure (`slices_<model>.png`) for each.
+
 ## Who does what
 
 | Member        | Username      | Role                      |

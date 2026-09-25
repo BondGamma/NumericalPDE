@@ -33,8 +33,13 @@ sys.path.insert(0, _PROJECT_ROOT)
 
 from code.tools import mc                       # noqa: E402
 from code.SDEs import bm_engine                 # noqa: E402
+from code.SDEs import gbm                       # noqa: E402
 from code.SDEs import nasv                      # noqa: E402
+from code.solvers import em as em_solver        # noqa: E402
+from code.solvers import milstein as milstein_solver  # noqa: E402
 from code.visualizations import plot_paths      # noqa: E402
+from code.visualizations import plot_paths_band            # noqa: E402
+from code.visualizations import plot_paths_band_slices     # noqa: E402
 
 FIGURES_DIR = os.path.join(_PROJECT_ROOT, "figures")
 
@@ -59,6 +64,87 @@ def _path_specs(dw_fine, n_max, n_list, dt):
         t = (dt * n_max / n) * np.arange(n + 1)
         specs.append((t, W, {"marker": "o", "ls": "", "ms": size, "label": "n=%d" % n}))
     return specs
+
+
+# --- advanced path-plotting test: confidence band + cross-sections --------- #
+
+_BAND_MODELS = ("bm", "gbm_exact", "gbm_em", "gbm_milstein", "nasv")
+
+
+def _simulate_ensemble(model, n_paths, n_steps, T=1.0, seed=321):
+    """Simulate an ensemble of 1-D paths for `model`.
+
+    Returns ``(t, paths)`` with ``paths`` of shape (n_paths, n_steps + 1).
+    Covers every model the advanced plotters are meant to serve: pure Brownian
+    motion, exact GBM, EM/Milstein-approximated GBM, and the NA-SV price.
+    """
+    dt = T / n_steps
+    t = dt * np.arange(n_steps + 1)
+
+    if model == "bm":                       # pure Brownian motion W(t)
+        dW = bm_engine.standard_bm(n_steps, dt, n_paths, seed=seed)
+        W = np.concatenate([np.zeros((n_paths, 1)), np.cumsum(dW, axis=1)],
+                           axis=1)
+        return t, W
+
+    if model == "gbm_exact":                # exact GBM from the log-price
+        dW = bm_engine.standard_bm(n_steps, dt, n_paths, seed=seed)
+        dX = gbm.dX_rhs(dt, dW)             # (mu - sigma^2/2) dt + sigma dW
+        X = np.log(gbm.GBM_S0) + np.concatenate(
+            [np.zeros((n_paths, 1)), np.cumsum(dX, axis=1)], axis=1)
+        return t, gbm.S_exact(X)
+
+    if model in ("gbm_em", "gbm_milstein"):  # EM / Milstein on the price S
+        dW = bm_engine.standard_bm(n_steps, dt, n_paths, seed=seed)
+        S0 = np.full(n_paths, gbm.GBM_S0)
+        S = (em_solver.em_solve("gbm", S0, dt, dW) if model == "gbm_em"
+             else milstein_solver.milstein_solve("gbm", S0, dt, dW))
+        return t, S
+
+    if model == "nasv":                     # NA-SV price S = exp(X)
+        dW1, dW2 = bm_engine.correlated_bm_pair(
+            n_steps, dt, nasv.NA_SV_RHO, n_paths, seed=seed)
+        X0 = np.full(n_paths, np.log(nasv.NA_SV_S0))
+        Y0 = np.full(n_paths, nasv.NA_SV_Y0)
+        X, _ = em_solver.em_solve("nasv", (X0, Y0), dt, (dW1, dW2))
+        return t, np.exp(X)
+
+    raise ValueError("unknown model %r; expected one of %s"
+                     % (model, _BAND_MODELS))
+
+
+def _demo_band_plots():
+    """Exercise plot_paths_band and plot_paths_band_slices on every model.
+
+    Each model is simulated (``seed``) and sampled (``rng``) with its own
+    per-model value.  This matters: ``standard_bm`` and ``correlated_bm_pair``
+    both draw from ``np.random.default_rng(seed)``, so a shared seed would make
+    the NA-SV's dW1 byte-identical to the GBM's dW and the plots would look
+    like the same process when they are not.
+    """
+    n_paths, n_steps = 1000, 256
+    for i, model in enumerate(_BAND_MODELS):
+        t, paths = _simulate_ensemble(model, n_paths, n_steps, T=1.0, seed=i)
+        ylabel = "W(t)" if model == "bm" else "S(t)"
+
+        fig, _ = plot_paths_band(
+            paths, t, q=0.05, poly_deg=8, sample=10, rng=i,
+            band_label="90% band", ylabel=ylabel,
+            title="Confidence band — %s" % model,
+            save_path=os.path.join(FIGURES_DIR, "band_%s.png" % model),
+            show=False)
+        plt.close(fig)
+
+        fig, _ = plot_paths_band_slices(
+            paths, t, times=(1.0 / 3.0, 2.0 / 3.0, 1.0), q=0.05, poly_deg=8,
+            sample=10, rng=i, band_label="90% band", ylabel=ylabel,
+            title="Cross-sections — %s" % model,
+            save_path=os.path.join(FIGURES_DIR, "slices_%s.png" % model),
+            show=False)
+        plt.close(fig)
+
+    print("wrote %d band/slice figures to %s"
+          % (2 * len(_BAND_MODELS), FIGURES_DIR))
 
 
 def main():
@@ -101,6 +187,9 @@ def main():
         plt.close(fig)
 
     print("wrote 4 figures to %s" % FIGURES_DIR)
+
+    # 4) advanced plotters: confidence band + cross-section distributions.
+    _demo_band_plots()
 
 
 if __name__ == "__main__":
