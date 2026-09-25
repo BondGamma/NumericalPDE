@@ -1,0 +1,75 @@
+Code-Review Checklist
+Code-quality check (intra-team review)
+During the intra-team review, each member reads the team’s code and scores it against this checklist. It keeps
+the review honest and focused on correctness and clarity, not style.
+Ground rule: you are reviewing correctness and clarity, not style taste. “Not how I would write it” is not a
+defect. “I can’t tell what it does” is.
+Reviewer:
+
+Code under review:
+
+A. Can it run?
+□ python code/run_all.py runs end-to-end without errors
+□ README explains how to install deps and run
+
+B. Is the model right?
+□ The RHS f (t, y) matches the report’s equations (spot-check 2–3 terms)
+□ Parameters are defined somewhere findable (constants block / config)
+□ Units or scales are noted (e.g. stiffness ratio computed)
+
+C. Are the methods correctly implemented?
+□ Explicit Euler: y + hf (t, y) — one line, not accidentally implicit
+□ RK4: all four stages use the correct arguments (k2 uses t + h/2, etc.)
+□ Implicit Euler: Newton solves w − yn − hf (tn+1 , w) = 0, not a simplified version
+□ Newton Jacobian JF = I − hJf (check sign!) matches the finite-difference check in the report
+□ No hard-coded step sizes where the code claims adaptivity
+□ Adaptive controller estimates an error and uses it to change h
+
+D. Are the numbers believable?
+□ There is a comparison against a reference (analytic or high-accuracy)
+□ The observed order is consistent with the claim (slope on log-log)
+□ Mass / energy / invariant conservation is checked where applicable
+□ Any claim like “stable” is backed by a stability-region plot or an experiment, not just an assertion
+
+1
+
+E. Is it maintainable?
+□ Functions are small and named by what they do
+□ f (t, y) is swappable (the integrator doesn’t know the model)
+□ Magic numbers are named or commented
+□ Comments explain why, not just what
+□ No dead code (commented-out blocks, unused imports)
+
+F. Findings
+#
+
+Severity (blocker / major / minor)
+
+Location (file:line)
+
+What’s wrong
+
+Suggested fix
+
+1
+2
+3
+
+G. Top 3 things to fix before Seminar 2
+1.
+
+2.
+
+3.
+
+Reviewer instructions
+• Blocker = code doesn’t run, or produces wrong results (must fix).
+• Major = a claim in the report is not supported by the code (e.g. “adaptive” but fixed h; “order 4” but RK4
+stages wrong).
+• Minor = clarity / maintainability (rename, comment, split function).
+• Fill in findings even if everything passes — “no findings” means you did not look carefully.
+• Give the reviewed team one actionable positive: something they did well that they should keep doing.
+
+2
+
+
