@@ -34,6 +34,7 @@ sys.path.insert(0, _PROJECT_ROOT)
 from code.tools import mc                       # noqa: E402
 from code.SDEs import bm_engine                 # noqa: E402
 from code.SDEs import nasv                      # noqa: E402
+from code.visualizations import plot_paths      # noqa: E402
 
 FIGURES_DIR = os.path.join(_PROJECT_ROOT, "figures")
 
@@ -44,23 +45,20 @@ def _coarse_path(dw_fine, n):
     return np.concatenate([[0.0], np.cumsum(coarse)])
 
 
-def _plot_one(ax, dw_fine, n_max, n_list, dt, title):
-    """Plot the fine path and overlay the coarse samples (they should match)."""
+def _path_specs(dw_fine, n_max, n_list, dt):
+    """Build the (t, y, style) specs for the fine path + coarse overlaid samples."""
     t_fine = dt * np.arange(n_max + 1)
     W_fine = np.concatenate([[0.0], np.cumsum(dw_fine)])
-    ax.plot(t_fine, W_fine, lw=1.0, color="0.35", label="fine (n=%d)" % n_max)
+    specs = [(t_fine, W_fine,
+              {"lw": 1.0, "color": "0.35", "label": "fine (n=%d)" % n_max})]
     # Larger n -> more sample points -> smaller pins, and plot in ascending-n
     # order so the smallest pins are drawn last (on top).  Otherwise all pins
     # at a shared grid point overlap and only the last colour is visible.
     for size, n in zip(np.linspace(8.0, 4.0, len(n_list)), sorted(n_list)):
         W = _coarse_path(dw_fine, n)
         t = (dt * n_max / n) * np.arange(n + 1)
-        ax.plot(t, W, marker="o", ls="", ms=size, label="n=%d" % n)
-    ax.set_title(title)
-    ax.set_xlabel("t")
-    ax.set_ylabel("W(t)")
-    ax.legend(fontsize="small")
-    ax.grid(True, ls=":", alpha=0.5)
+        specs.append((t, W, {"marker": "o", "ls": "", "ms": size, "label": "n=%d" % n}))
+    return specs
 
 
 def main():
@@ -81,20 +79,22 @@ def main():
 
     # 2) + 3) visualise each simulation: fine path + coarse samples overlaid.
     for i in range(n_sims):
-        fig, ax = plt.subplots(figsize=(7, 4.5))
-        _plot_one(ax, gbm_log[i], n_max, n_list, dt,
-                  "Standard BM — simulation %d" % (i + 1))
-        fig.tight_layout()
-        fig.savefig(os.path.join(FIGURES_DIR, "bm_standard_sim%d.png" % (i + 1)),
-                    dpi=150)
+        fig, _ = plot_paths(
+            _path_specs(gbm_log[i], n_max, n_list, dt),
+            title="Standard BM — simulation %d" % (i + 1),
+            xlabel="t", ylabel="W(t)", figsize=(7, 4.5),
+            save_path=os.path.join(FIGURES_DIR, "bm_standard_sim%d.png" % (i + 1)),
+            show=False)
         plt.close(fig)
 
     for i in range(n_sims):
         fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
-        _plot_one(axes[0], nasv_log[0, i], n_max, n_list, dt,
-                  "Correlated BM W1 — sim %d" % (i + 1))
-        _plot_one(axes[1], nasv_log[1, i], n_max, n_list, dt,
-                  "Correlated BM W2 — sim %d" % (i + 1))
+        plot_paths(_path_specs(nasv_log[0, i], n_max, n_list, dt),
+                   ax=axes[0], title="Correlated BM W1 — sim %d" % (i + 1),
+                   xlabel="t", ylabel="W(t)", show=False)
+        plot_paths(_path_specs(nasv_log[1, i], n_max, n_list, dt),
+                   ax=axes[1], title="Correlated BM W2 — sim %d" % (i + 1),
+                   xlabel="t", ylabel="W(t)", show=False)
         fig.tight_layout()
         fig.savefig(os.path.join(FIGURES_DIR, "bm_pairing_sim%d.png" % (i + 1)),
                     dpi=150)
